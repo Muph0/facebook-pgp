@@ -203,7 +203,7 @@ function SettingsMenu(menu)
             GM_setValue('settings', JSON.stringify(self));
             let keys_raw = keys.map(function(key) { return key.armor() });
             GM_setValue('keys', JSON.stringify(keys_raw));
-            pkey_save();
+            pkey_save && pkey_save();
         };
         self.load = function() {
 
@@ -486,7 +486,7 @@ function FacebookPGP()
             let info = new InfoMsg('Message sent:', ciphertext);
             info.show(8000);
 
-            //msg = ciphertext
+            msg = ciphertext
         }
 
         return msg;
@@ -501,7 +501,7 @@ function FacebookPGP()
             let my_pubkey = settings.state.getMyKey();
             let pkey = openpgp.key.readArmored(GM_getValue('pkey')).keys[0];
 
-            if (my_pubkey && pkey && peer.pubkey)
+            if (my_pubkey && pkey && peer.pubkey && settings.state.enabled)
             {
                 let options = {
                     data: cleartext,
