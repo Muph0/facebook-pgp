@@ -27,14 +27,14 @@ function showInputBox(headline, text, placeholder)
     let result = {
         button: null,
         text: null
-    }
+    };
 
     let callback = null;
     let resolver = {
         done: function(_callback) {
             callback = _callback;
         }
-    }
+    };
 
     let doCallback = function() {
         result.text = overlay.querySelector('textarea').value;
@@ -113,7 +113,8 @@ function SettingsMenu(menu)
 
         self.setPkey = function(key) {
         let pkey_temp = key.primaryKey.fingerprint;
-            pkey_save = function() { GM_setValue('pkey', key.armor()); pkey_save = null; self.pkey = key.primaryKey.fingerprint;};
+            self.pkey = key.primaryKey.fingerprint;
+            pkey_save = function() { GM_setValue('pkey', key.armor()); pkey_save = null;};
         };
         self.deletePkey = function(key) {
             pkey_save = function() { GM_setValue('pkey', undefined); pkey_save = null; self.pkey = null; }
@@ -203,10 +204,10 @@ function SettingsMenu(menu)
         };
 
         self.save = function() {
+            pkey_save && pkey_save();
             GM_setValue('settings', JSON.stringify(self));
             let keys_raw = keys.map(function(key) { return key.armor() });
             GM_setValue('keys', JSON.stringify(keys_raw));
-            pkey_save && pkey_save();
         };
         self.load = function() {
 
@@ -268,6 +269,7 @@ function SettingsMenu(menu)
         if (!self.state.pkey_save || confirm('You have changed your private key. Do you wish to discard changes?'))
         {
             if (self.visible()) self.toggle();
+            self.state.load();
         }
     };
     self.toggle = function() {
@@ -306,19 +308,12 @@ function SettingsMenu(menu)
 
             if (result.button === 'OK')
             {
-                let armored = openpgp.key.readArmored(result.text);
+                let armored = result.text.match(/-----BEGIN .* BLOCK-----[\s\S]*?-----END .* BLOCK-----/g);
+                let keys_imported = 0;
 
-                if (armored.keys.length === 0)
+                for (let key_armor of armored)
                 {
-                    let msg = new InfoMsg('Error',
-                        'The string you have submitted didn\'t contain any supported public keys.',
-                        'error');
-
-                    msg.show(10000);
-                }
-
-                for (let key of armored.keys)
-                {
+                    let key = openpgp.key.readArmored(result.text).keys[0];
                     if (key && key.getUserIds().length >= 1 && key.isPublic())
                     {
                         let msg = new InfoMsg('Public key imported',
@@ -331,7 +326,7 @@ function SettingsMenu(menu)
                         insertKeyRow(key);
                         self.state.addKey(key);
 
-                        console.log(key);
+                        keys_imported++;
                     }
 
                     if (key.isPrivate())
@@ -342,6 +337,15 @@ function SettingsMenu(menu)
 
                         msg.show(10000);
                     }
+                }
+
+                if (keys_imported === 0)
+                {
+                    let msg = new InfoMsg('Error',
+                        'The string you have submitted didn\'t contain any supported public keys.',
+                        'error');
+
+                    msg.show(10000);
                 }
             }
         });
@@ -354,29 +358,23 @@ function SettingsMenu(menu)
 
             if (result.button === 'OK')
             {
-                let armored = openpgp.key.readArmored(result.text);
-
-                if (armored.keys.length === 0)
-                {
-                    let msg = new InfoMsg('Error',
-                        'The string you have submitted didn\'t contain any supported keys.',
-                        'error');
-
-                    msg.show(10000);
-                }
+                let armored = result.text.match(/-----BEGIN .* BLOCK-----[\s\S]*?-----END .* BLOCK-----/g);
+                let keys_imported = 0;
 
                 let public_imported = false;
                 let private_imported = false;
 
-                for (let key of armored.keys)
+                for (let key_armor of armored)
                 {
+                    let key = openpgp.key.readArmored(key_armor).keys[0];
+
                     if (private_imported && public_imported) break;
 
                     if (key && key.getUserIds().length >= 1 && key.isPublic() && !public_imported)
                     {
                         let msg = new InfoMsg('Public key imported',
                             shortFingerprint(key.primaryKey.fingerprint, 16) + '<br>' +
-                            key.getUserIds().join(', ').replace(/\</g,'&lt;').replace(/\>/g,'&gt;').replace(/\&/g,'&amp;')
+                            key.getUserIds().join(', ')//.replace(/\</g,'&lt;').replace(/\>/g,'&gt;').replace(/\&/g,'&amp;')
                             );
 
                         msg.show(10000);
@@ -385,22 +383,35 @@ function SettingsMenu(menu)
                         self.state.addKey(key);
 
                         public_imported = true;
+                        keys_imported++;
                     }
 
                     if (key && key.getUserIds().length >= 1 && key.isPrivate() && !private_imported)
                     {
                         let msg = new InfoMsg('Private key imported',
                             shortFingerprint(key.primaryKey.fingerprint, 16) + '<br>' +
-                            key.getUserIds().join(', ').replace(/\</g,'&lt;').replace(/\>/g,'&gt;').replace(/\&/g,'&amp;'),
+                            key.getUserIds().join(', '),//.replace(/\</g,'&lt;').replace(/\>/g,'&gt;').replace(/\&/g,'&amp;'),
                             'success');
 
                         msg.show(10000);
                         self.state.setPkey(key);
 
                         private_imported = true;
+                        keys_imported++;
                     }
                 }
+
+                if (keys_imported === 0)
+                {
+                    let msg = new InfoMsg('Error',
+                        'The string you have submitted didn\'t contain any supported keys.',
+                        'error');
+
+                    msg.show(10000);
+                }
             }
+
+            self.stateToDOM();
         });
     };
 
@@ -428,7 +439,10 @@ function SettingsMenu(menu)
 
         }
         else
+        {
             self.DOM.priv_fp.innerHTML = '<b class="text-error">Please, import your private key.</b>';
+            self.DOM.me_info.innerHTML = '';
+        }
 
         // checkboxes
         for (let c in self.DOM.checkboxes)
@@ -672,9 +686,9 @@ function FacebookPGP()
                 {
                     //console.log(options, carrier);
                     openpgp.decrypt(options).then(function(result) {
-                        let esc = result.data
-                            .replace(/\</g, '&lt;').replace(/\>/g, '&gt;').replace(/\&/g, '&amp;')
-                            .replace(/\n/g, '<br>');
+                        let esc = result.data;
+                            // .replace(/\</g, '&lt;').replace(/\>/g, '&gt;').replace(/\&/g, '&amp;')
+                            // .replace(/\n/g, '<br>');
 
                         let icontray = document.createElement('div');
                         icontray.classList.add('icontray');
@@ -981,7 +995,7 @@ function FacebookPGP()
     }
     .inputbox-overlay > .inputbox-form {
         background-color: white;
-        width: 400px;
+        width: 500px;
         margin: 30px auto;
         padding: 30px 40px;
         border: 1px solid #DDD;
