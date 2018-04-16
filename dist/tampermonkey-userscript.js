@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Facebook OpenPGP
 // @namespace    https://github.com/Muph0/facebook-pgp
-// @version      0.11
+// @version      0.12
 // @description  try to take over the world!
 // @author       You
 // @require      https://raw.githubusercontent.com/Muph0/facebook-pgp/master/facebook-pgp.js

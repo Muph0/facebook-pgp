@@ -3,7 +3,7 @@
 
 function shortFingerprint(fingerprint, byteCount)
 {
-    return fingerprint.split(/(?<=\b(?:..)+)/, byteCount).join(' ').toUpperCase();
+    return fingerprint.match(/.{2}/g).slice(0, byteCount).join(' ').toUpperCase();
 }
 
 function showInputBox(headline, text, placeholder)
@@ -219,7 +219,7 @@ function SettingsMenu(menu)
                 }
 
             self.clearKeys();
-            let loaded_keys = JSON.parse(GM_getValue('keys', ''));
+            let loaded_keys = JSON.parse(GM_getValue('keys', 'null'));
             if (loaded_keys)
                 for (let k of loaded_keys)
                     self.addKey(k);
@@ -323,7 +323,7 @@ function SettingsMenu(menu)
                     {
                         let msg = new InfoMsg('Public key imported',
                             shortFingerprint(key.primaryKey.fingerprint, 16) + '<br>' +
-                            key.getUserIds().join(', ').replace(/\</g,'&lt;').replace(/\>/g,'&gt;'),
+                            key.getUserIds().join(', ').replace(/\</g,'&lt;').replace(/\>/g,'&gt;')
                             );
 
                         msg.show(10000);
@@ -376,7 +376,7 @@ function SettingsMenu(menu)
                     {
                         let msg = new InfoMsg('Public key imported',
                             shortFingerprint(key.primaryKey.fingerprint, 16) + '<br>' +
-                            key.getUserIds().join(', ').replace(/\</g,'&lt;').replace(/\>/g,'&gt;').replace(/\&/g,'&amp;'),
+                            key.getUserIds().join(', ').replace(/\</g,'&lt;').replace(/\>/g,'&gt;').replace(/\&/g,'&amp;')
                             );
 
                         msg.show(10000);
