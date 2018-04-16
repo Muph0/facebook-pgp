@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Facebook OpenPGP
-// @namespace    http://tampermonkey.net/
-// @version      0.1
+// @namespace    https://github.com/Muph0/facebook-pgp
+// @version      0.11
 // @description  try to take over the world!
 // @author       You
 // @require      https://raw.githubusercontent.com/Muph0/facebook-pgp/master/facebook-pgp.js

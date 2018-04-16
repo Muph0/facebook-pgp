@@ -219,7 +219,7 @@ function SettingsMenu(menu)
                 }
 
             self.clearKeys();
-            let loaded_keys = JSON.parse(GM_getValue('keys', '{}'));
+            let loaded_keys = JSON.parse(GM_getValue('keys', ''));
             if (loaded_keys)
                 for (let k of loaded_keys)
                     self.addKey(k);
