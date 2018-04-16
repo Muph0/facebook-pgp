@@ -102,7 +102,10 @@ function SettingsMenu(menu)
         let pkey_save = null;
 
         self.pkey = null;
+
         self.enabled = true;
+        self.log_messages = false;
+
         let pkey_temp = null;
 
         self.removedKeys = false;
@@ -216,7 +219,7 @@ function SettingsMenu(menu)
                 }
 
             self.clearKeys();
-            let loaded_keys = JSON.parse(GM_getValue('keys'));
+            let loaded_keys = JSON.parse(GM_getValue('keys', '{}'));
             if (loaded_keys)
                 for (let k of loaded_keys)
                     self.addKey(k);
@@ -447,7 +450,8 @@ function SettingsMenu(menu)
         self.DOM.priv_fp = menu.querySelector('.private .fingerprint');
         self.DOM.me_info = menu.querySelector('.me-info');
         self.DOM.checkboxes = {
-            enabled: menu.querySelector('[name="enable-pgp"]')
+            enabled: menu.querySelector('[name="enable-pgp"]'),
+            log_messages: menu.querySelector('[name="msg-log-pgp"]')
         };
 
 
@@ -483,10 +487,14 @@ function FacebookPGP()
 
         if (self.msgSending)
         {
-            let info = new InfoMsg('Message sent:', ciphertext);
-            info.show(8000);
+            if (settings.state.log_messages)
+            {
+                let info = new InfoMsg('Message sent:', ciphertext);
+                info.show(8000);
+            }
 
-            msg = ciphertext
+            if (settings.state.enabled)
+                msg = ciphertext;
         }
 
         return msg;
@@ -772,6 +780,7 @@ function FacebookPGP()
     <hr>
     <div>
         <label><input type="checkbox" name="enable-pgp">Enable encryption</label>
+        <label><input type="checkbox" name="msg-log-pgp">Log all messages</label>
     </div>
     <hr>
     <div class="public">
