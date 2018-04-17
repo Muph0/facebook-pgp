@@ -531,7 +531,8 @@ function FacebookPGP()
                     publicKeys: [peer.pubkey, my_pubkey]
                 };
 
-                openpgp.encrypt(options).then(function(result) { ciphertext = result.data; });
+                self.msgSending = true;
+                openpgp.encrypt(options).then(function(result) { ciphertext = result.data; setTimeout(function(){ self.msgSending = false }, 250); });
             }
             else
             {
@@ -619,7 +620,9 @@ function FacebookPGP()
                         instance.$24 = function(a) {
 
                             self.msgSending = true;
+                            //debugger;
                             let $24_rst = real_$24.apply(instance, [a]);
+                            //debugger;
                             self.msgSending = false;
 
                             return $24_rst;
@@ -680,7 +683,7 @@ function FacebookPGP()
 
             if (options)
             {
-                let carrier = mbox.querySelector('div > span');
+                let carrier = mbox.querySelector('div').querySelector('span');
 
                 try
                 {
